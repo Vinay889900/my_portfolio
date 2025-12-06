@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, MessageSquare } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 import '../styles/RobotBuddy.css';
 
 const RobotBuddy = () => {
@@ -13,12 +13,32 @@ const RobotBuddy = () => {
     const introScript = "Hello! I'm excited to introduce you to my friend Vinay. He is a talented Gen AI Developer and Full-Stack Engineer. Vinay specializes in building intelligent systems using Generative AI, Large Language Models, and RAG architectures. He has gained valuable experience interning at Infosys Springboard and Cognifyz Technologies, where he worked on advanced RAG chatbots and scalable AI solutions. His tech stack is impressive, featuring Python, React, Node.js, and powerful frameworks like LangChain. He's built some cool projects, including a hallucination-free RAG Chatbot and an AI-powered MERN app. Vinay is also a dedicated learner, having solved over 200 DSA problems. Feel free to check out his work below or grab his resume. I'll be here if you need anything!";
 
     useEffect(() => {
-        // Auto-open and speak on mount
+        // Auto-open and ATTEMPT to speak on mount
         if (!hasPlayedIntro) {
             const timer = setTimeout(() => {
                 setIsOpen(true);
                 addMessage(introScript, 'bot');
+
+                // Try to auto-speak
                 speak(introScript);
+
+                // FALLBACK: Add a one-time click listener to the window
+                // If auto-play was blocked, the first click anywhere will trigger it
+                const handleFirstInteraction = () => {
+                    if (!window.speechSynthesis.speaking) {
+                        speak(introScript);
+                    }
+                    // Clean up listeners immediately after first interaction
+                    window.removeEventListener('click', handleFirstInteraction);
+                    window.removeEventListener('keydown', handleFirstInteraction);
+                    window.removeEventListener('scroll', handleFirstInteraction);
+                };
+
+                window.addEventListener('click', handleFirstInteraction);
+                window.addEventListener('keydown', handleFirstInteraction);
+                // Also try on scroll start
+                window.addEventListener('scroll', handleFirstInteraction, { once: true });
+
                 setHasPlayedIntro(true);
             }, 1000); // Small delay to ensure page load
             return () => clearTimeout(timer);
@@ -35,6 +55,9 @@ const RobotBuddy = () => {
 
     const speak = (text) => {
         if ('speechSynthesis' in window) {
+            // Check if already speaking to prevent double-talk
+            if (window.speechSynthesis.speaking && isSpeaking) return;
+
             window.speechSynthesis.cancel(); // Stop previous speech
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.pitch = 1.1;
@@ -42,9 +65,9 @@ const RobotBuddy = () => {
             utterance.onstart = () => setIsSpeaking(true);
             utterance.onend = () => setIsSpeaking(false);
 
-            // Handle browser autoplay policy
+            // Handle browser autoplay policy errors
             utterance.onerror = (e) => {
-                console.error("Speech synthesis error:", e);
+                console.warn("Speech synthesis error or blocked:", e);
                 setIsSpeaking(false);
             };
 
@@ -66,6 +89,10 @@ const RobotBuddy = () => {
     };
 
     const options = [
+        {
+            label: "🔊 Read Intro",
+            response: introScript
+        },
         {
             label: "Show Skills",
             response: "Vinay is a pro at Python, JavaScript, React, and FastAPI. He's also an expert in Generative AI, LLMs, and LangChain! Check out the Skills section for more."
