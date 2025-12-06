@@ -11,9 +11,12 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 
+import Background3D from './components/Background3D';
+
 function App() {
     return (
         <div className="app-container">
+            <Background3D />
             <Navbar />
             <Hero />
             <About />

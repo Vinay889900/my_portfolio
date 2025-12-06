@@ -1,15 +1,15 @@
 import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Points, PointMaterial, Stars } from '@react-three/drei';
+import { Points, PointMaterial, Stars, Edges } from '@react-three/drei';
 import * as random from 'maath/random/dist/maath-random.esm';
 
 const ParticleField = (props) => {
     const ref = useRef();
-    const [sphere] = useState(() => random.inSphere(new Float32Array(6000), { radius: 2 }));
+    const [sphere] = useState(() => random.inSphere(new Float32Array(25000), { radius: 2.8 })); // Ultra density
 
     useFrame((state, delta) => {
-        ref.current.rotation.x -= delta / 20;
-        ref.current.rotation.y -= delta / 25;
+        ref.current.rotation.x -= delta / 7; // Warp speed
+        ref.current.rotation.y -= delta / 10;
     });
 
     return (
@@ -18,10 +18,10 @@ const ParticleField = (props) => {
                 <PointMaterial
                     transparent
                     color="#00f0ff"
-                    size={0.002}
+                    size={0.0035}  // Larger, punchier stars
                     sizeAttenuation={true}
                     depthWrite={false}
-                    opacity={0.4}
+                    opacity={0.9}   // Maximum visibility
                 />
             </Points>
         </group>
@@ -38,7 +38,15 @@ const ConnectingLines = () => {
     return (
         <mesh ref={ref} scale={2.5}>
             <icosahedronGeometry args={[1, 1]} />
-            <meshBasicMaterial color="#7000ff" wireframe transparent opacity={0.08} />
+            <meshBasicMaterial transparent opacity={0} />
+            <Edges
+                scale={1}
+                threshold={15}
+                color="#b026ff" // Reverted to Neon Purple
+                lineWidth={1.5} // Kept approved thickness
+                transparent
+                opacity={0.4}   // Kept approved opacity
+            />
         </mesh>
     );
 };

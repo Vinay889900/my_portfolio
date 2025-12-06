@@ -38,13 +38,26 @@ h6 {
 }
 
 .section-title {
-  font-size: 2.5rem;
-  color: #fff;
-  margin-bottom: 3rem;
+  font-size: 3rem;
   font-weight: 700;
-  letter-spacing: -1px;
+  margin-bottom: 3rem;
+  letter-spacing: -1.5px;
+  background: linear-gradient(135deg, #fff 0%, #00f0ff 40%, #7000ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 0.5rem;
+  /* Glow effect */
+  text-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
 }
 
 .section-title span {
-  color: var(--color-primary);
+  /* Span inherits gradient now, or can be distinct */
+  background: linear-gradient(135deg, #7000ff 0%, #ff0055 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
