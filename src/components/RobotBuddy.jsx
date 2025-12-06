@@ -13,37 +13,71 @@ const RobotBuddy = () => {
     const introScript = "Hello! I'm excited to introduce you to my friend Vinay. He is a talented Gen AI Developer and Full-Stack Engineer. Vinay specializes in building intelligent systems using Generative AI, Large Language Models, and RAG architectures. He has gained valuable experience interning at Infosys Springboard and Cognifyz Technologies, where he worked on advanced RAG chatbots and scalable AI solutions. His tech stack is impressive, featuring Python, React, Node.js, and powerful frameworks like LangChain. He's built some cool projects, including a hallucination-free RAG Chatbot and an AI-powered MERN app. Vinay is also a dedicated learner, having solved over 200 DSA problems. Feel free to check out his work below or grab his resume. I'll be here if you need anything!";
 
     useEffect(() => {
-        // Auto-open and ATTEMPT to speak on mount
         if (!hasPlayedIntro) {
+
+            // Interaction handler to unlock audio
+            const handleInteraction = () => {
+                if (window.speechSynthesis.speaking) return; // Already speaking
+
+                // Clear any previous queued utterances
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(introScript);
+                utterance.pitch = 1.1;
+                utterance.rate = 1.0;
+                utterance.onstart = () => setIsSpeaking(true);
+                utterance.onend = () => setIsSpeaking(false);
+                utterance.onerror = (e) => console.warn("Audio blocked:", e);
+
+                window.speechSynthesis.speak(utterance);
+                setHasPlayedIntro(true);
+
+                // Clean up all listeners immediately
+                ['click', 'keydown', 'touchstart'].forEach(event =>
+                    window.removeEventListener(event, handleInteraction)
+                );
+            };
+
+            // 1. Try to open and speak automatically
             const timer = setTimeout(() => {
                 setIsOpen(true);
                 addMessage(introScript, 'bot');
 
-                // Try to auto-speak
-                speak(introScript);
+                // Try auto-speak (likely blocked, but worth a shot)
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(introScript);
+                    utterance.pitch = 1.1;
+                    utterance.rate = 1.0;
+                    utterance.onstart = () => {
+                        setIsSpeaking(true);
+                        setHasPlayedIntro(true); // If successful, mark as played
+                        // If successful, remove fallback listeners
+                        ['click', 'keydown', 'touchstart'].forEach(event =>
+                            window.removeEventListener(event, handleInteraction)
+                        );
+                    };
+                    utterance.onend = () => setIsSpeaking(false);
+                    utterance.onerror = () => {
+                        // If blocked, just ensure listeners are active
+                        console.log("Auto-play blocked, waiting for interaction");
+                    };
+                    window.speechSynthesis.speak(utterance);
+                }
+            }, 1000);
 
-                // FALLBACK: Add a one-time click listener to the window
-                // If auto-play was blocked, the first click anywhere will trigger it
-                const handleFirstInteraction = () => {
-                    if (!window.speechSynthesis.speaking) {
-                        speak(introScript);
-                    }
-                    // Clean up listeners immediately after first interaction
-                    window.removeEventListener('click', handleFirstInteraction);
-                    window.removeEventListener('keydown', handleFirstInteraction);
-                    window.removeEventListener('scroll', handleFirstInteraction);
-                };
+            // 2. Attach listeners IMMEDIATELY to catch any interaction
+            ['click', 'keydown', 'touchstart'].forEach(event =>
+                window.addEventListener(event, handleInteraction, { once: true })
+            );
 
-                window.addEventListener('click', handleFirstInteraction);
-                window.addEventListener('keydown', handleFirstInteraction);
-                // Also try on scroll start
-                window.addEventListener('scroll', handleFirstInteraction, { once: true });
-
-                setHasPlayedIntro(true);
-            }, 1000); // Small delay to ensure page load
-            return () => clearTimeout(timer);
+            return () => {
+                clearTimeout(timer);
+                ['click', 'keydown', 'touchstart'].forEach(event =>
+                    window.removeEventListener(event, handleInteraction)
+                );
+            };
         }
-    }, [hasPlayedIntro]);
+    }, [hasPlayedIntro, introScript]);
 
     useEffect(() => {
         scrollToBottom();
@@ -55,22 +89,12 @@ const RobotBuddy = () => {
 
     const speak = (text) => {
         if ('speechSynthesis' in window) {
-            // Check if already speaking to prevent double-talk
-            if (window.speechSynthesis.speaking && isSpeaking) return;
-
-            window.speechSynthesis.cancel(); // Stop previous speech
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.pitch = 1.1;
-            utterance.rate = 1.0; // Normal speed for clarity
+            utterance.rate = 1.0;
             utterance.onstart = () => setIsSpeaking(true);
             utterance.onend = () => setIsSpeaking(false);
-
-            // Handle browser autoplay policy errors
-            utterance.onerror = (e) => {
-                console.warn("Speech synthesis error or blocked:", e);
-                setIsSpeaking(false);
-            };
-
             window.speechSynthesis.speak(utterance);
         }
     };
